@@ -1,52 +1,46 @@
 from typing import Any, Text, Dict, List
-import random
+from enum import Enum
+from random import choice as random_choice
 
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 
 
-# computer_choice & determine_winner functions refactored from
-# https://github.com/thedanelias/rock-paper-scissors-python/blob/master/rockpaperscissors.py, MIT liscence
+class Choice(Enum):
+    ROCK = "ROCK"
+    PAPER = "PAPER"
+    SCISSORS = "SCISSORS"
+
+
+def get_computer_choice() -> Choice:
+    return random_choice(list(Choice))
+
 
 class ActionPlayRPS(Action):
 
     def name(self) -> Text:
         return "action_play_rps"
 
-    def computer_choice(self):
-        generatednum = random.randint(1, 3)
-        if generatednum == 1:
-            computerchoice = "rock"
-        elif generatednum == 2:
-            computerchoice = "paper"
-        elif generatednum == 3:
-            computerchoice = "scissors"
+    def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        print(tracker.get_slot("choice").upper())
+        try:
+            user_choice = Choice[tracker.get_slot("choice").upper()]
+        except KeyError:
+            dispatcher.utter_message(text=f"Incorrect value. Please try again")
+            return []
 
-        return (computerchoice)
+        comp_choice = get_computer_choice()
 
-    def run(self, dispatcher: CollectingDispatcher,
-            tracker: Tracker,
-            domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
+        dispatcher.utter_message(text=f"You chose {user_choice.value.lower()}")
+        dispatcher.utter_message(text=f"The computer chose {comp_choice.value.lower()}")
 
-        # play rock paper scissors
-        user_choice = tracker.get_slot("choice")
-        dispatcher.utter_message(text=f"You chose {user_choice}")
-        comp_choice = self.computer_choice()
-        dispatcher.utter_message(text=f"The computer chose {comp_choice}")
-
-        if user_choice == "rock" and comp_choice == "scissors":
-            dispatcher.utter_message(text="Congrats, you won!")
-        elif user_choice == "rock" and comp_choice == "paper":
-            dispatcher.utter_message(text="The computer won this round.")
-        elif user_choice == "paper" and comp_choice == "rock":
-            dispatcher.utter_message(text="Congrats, you won!")
-        elif user_choice == "paper" and comp_choice == "scissors":
-            dispatcher.utter_message(text="The computer won this round.")
-        elif user_choice == "scissors" and comp_choice == "paper":
-            dispatcher.utter_message(text="Congrats, you won!")
-        elif user_choice == "scissors" and comp_choice == "rock":
-            dispatcher.utter_message(text="The computer won this round.")
-        else:
+        if user_choice == comp_choice:
             dispatcher.utter_message(text="It was a tie!")
+        elif (user_choice == Choice.ROCK and comp_choice == Choice.SCISSORS) or \
+                (user_choice == Choice.PAPER and comp_choice == Choice.ROCK) or \
+                (user_choice == Choice.SCISSORS and comp_choice == Choice.PAPER):
+            dispatcher.utter_message(text="Congrats, you won!")
+        else:
+            dispatcher.utter_message(text="The computer won this round.")
 
         return []

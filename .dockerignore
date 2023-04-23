@@ -1,0 +1,4 @@
+#models/**
+#.idea
+#.rasa
+#.DS_Store

@@ -3,12 +3,12 @@ from requests import post
 from json import loads as load_json
 from os import environ
 
-RASA_URL = "http://localhost:5005/webhooks/rest/webhook"
+RASA_URL = "http://chatbot:5005/webhooks/rest/webhook"
 BOT_TOKEN_NAME = "BOT_TOKEN"
 
 
 async def handle_message(message: Message, user_message: str) -> None:
-    rasa_response = post(RASA_URL, json={"message": user_message, "sender": "bloczek"})
+    rasa_response = post(RASA_URL, json={"message": user_message, "sender": message.author.name})
 
     messages = [item["text"] for item in load_json(rasa_response.text)]
     result_msg = "\n".join(messages)
